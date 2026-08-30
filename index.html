@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Smart Camera Scanner - Absensi Siswa Sekolah</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Leaflet.js -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- HTML5-QRCode Scanner -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast-box">Memuat Sistem Camera Scanner...</div>
+
+  <!-- Scanner Container Card -->
+  <div class="scanner-card">
+    
+    <!-- Header -->
+    <div class="scanner-header">
+      <div class="brand">
+        <i class="fa-solid fa-camera-retro"></i>
+        <div>
+          <h3>ABSENSI SEKOLAH</h3>
+          <span>SMART SCANNER ENGINE</span>
+        </div>
+      </div>
+      <div class="badge-status-online">
+        <span class="dot"></span> REALTIME
+      </div>
+    </div>
+
+    <!-- Mode Selector Tab -->
+    <div class="mode-tab-container">
+      <button class="mode-btn active" id="tab-barcode" onclick="setMode('BARCODE')">
+        <i class="fa-solid fa-qrcode"></i> BARCODE / QR
+      </button>
+      <button class="mode-btn" id="tab-face" onclick="setMode('WAJAH')">
+        <i class="fa-solid fa-face-smile"></i> SCAN WAJAH
+      </button>
+      <button class="mode-btn" id="tab-manual" onclick="setMode('MANUAL')">
+        <i class="fa-solid fa-keyboard"></i> MANUAL
+      </button>
+    </div>
+
+    <!-- Camera Viewfinder -->
+    <div class="viewfinder-box">
+      <!-- HTML5 QrCode Target -->
+      <div id="qr-reader"></div>
+
+      <!-- Raw Video for Face & Photo Mode -->
+      <video id="face-video" autoplay playsinline muted></video>
+      <canvas id="snapshot-canvas" style="display: none;"></canvas>
+
+      <!-- Laser Line Animation for Barcode -->
+      <div class="laser-scanner" id="barcode-laser-line"></div>
+
+      <!-- Oval Face Detection Guide -->
+      <div class="face-guide-wrap" id="face-guide-overlay">
+        <div class="oval-frame"></div>
+        <div class="face-tip-pill">Arahkan Wajah ke Tengah Lingkaran</div>
+        <div class="confidence-bar-wrap" id="face-confidence-meter" style="display: none;">
+          <div class="confidence-bar-fill" id="confidence-fill" style="width: 0%;"></div>
+          <span id="confidence-label">Kecocokan: 0%</span>
+        </div>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="cam-overlay-tools">
+        <button class="tool-btn" title="Balik Kamera (Depan/Belakang)" onclick="toggleCameraFacing()"><i class="fa-solid fa-camera-rotate"></i></button>
+        <button class="tool-btn" title="Nyalakan Flash" id="btn-flash" onclick="toggleFlash()"><i class="fa-solid fa-bolt"></i></button>
+        <button class="tool-btn" title="Fullscreen" onclick="toggleFullscreen()"><i class="fa-solid fa-expand"></i></button>
+      </div>
+    </div>
+
+    <!-- GPS & Leaflet Radar Section -->
+    <div class="gps-radar-box">
+      <div class="gps-info-bar">
+        <div class="gps-label">
+          <i class="fa-solid fa-location-crosshairs"></i>
+          <span id="gps-coords-display">Mencari Geolocation GPS...</span>
+        </div>
+        <div id="gps-geofence-badge" class="geofence-badge pending">
+          <i class="fa-solid fa-spinner fa-spin"></i> Menghitung Jarak
+        </div>
+      </div>
+      <div id="scanner-mini-map"></div>
+    </div>
+
+    <!-- Manual Student ID Input Box (when in Manual or Face matching) -->
+    <div class="manual-input-box" id="manual-student-panel" style="display: none;">
+      <label><i class="fa-solid fa-id-card"></i> Masukkan NIS / Barcode Siswa:</label>
+      <div style="display: flex; gap: 8px; margin-top: 6px;">
+        <input type="text" id="manual-student-id" placeholder="Contoh: SIS-001 / 20261001" class="custom-input">
+        <button class="btn-check" onclick="submitManualStudent()"><i class="fa-solid fa-magnifying-glass"></i> Cek</button>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="scanner-footer-actions">
+      <button class="btn-main-action" id="btn-main-trigger" onclick="handleMainActionClick()">
+        <i class="fa-solid fa-camera"></i> <span id="main-btn-text">Ambil Foto & Verifikasi</span>
+      </button>
+    </div>
+
+    <!-- Footer Copyright -->
+    <div class="scanner-credit">
+      © 2026 APLIKASIKITA.ID • Dev: Muhamad Badru Wasih • WA: 082258041628
+    </div>
+  </div>
+
+  <!-- Main Logic Script -->
+  <script src="app.js"></script>
+</body>
+</html>
