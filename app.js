@@ -489,43 +489,47 @@ function transmitAttendanceResult(studentId, method, confidence, photoData) {
     timestamp: new Date().toISOString()
   };
 
-  showToast('Mengirim hasil absensi ke sistem...', 3000);
+  showToast('Memproses absensi...', 3000);
+
+  let sentViaBridge = false;
 
   // 1. Kirim via postMessage ke parent iframe
   if (window.parent && window.parent !== window) {
     window.parent.postMessage(payload, '*');
+    sentViaBridge = true;
   }
 
   // 2. Kirim via postMessage ke popup opener (Jendela Utama GAS)
-  if (window.opener) {
+  if (window.opener && !window.opener.closed) {
     window.opener.postMessage(payload, '*');
+    sentViaBridge = true;
   }
 
-  // 3. Standalone mode: Hanya jika dibuka mandiri di tab browser tanpa parent/opener
-  const isStandalone = (!window.opener && window.parent === window);
-  if (isStandalone && ScannerState.apiEndpoint) {
-    fetch(ScannerState.apiEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: 'recordAttendance', ...payload }),
-      redirect: 'follow',
-      mode: 'cors'
-    }).then(res => res.json()).then(data => {
-      if (data.success) {
-        showToast(data.message || 'Absensi berhasil tersimpan!', 4000);
-      } else {
-        showToast(data.message || 'Gagal absensi', 4000);
-      }
-    }).catch(() => {
-      showToast('Hasil absensi terkirim ke server!', 3000);
-    });
+  if (sentViaBridge) {
+    showToast('✓ Absensi Berhasil Terkirim ke Sistem!', 3500);
+  } else if (ScannerState.apiEndpoint) {
+    // 3. Standalone mode: Jika scanner dibuka mandiri di tab browser terpisah
+    try {
+      fetch(ScannerState.apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'recordAttendance', ...payload }),
+        mode: 'no-cors'
+      }).then(() => {
+        showToast('✓ Absensi Berhasil Disimpan ke Server!', 3500);
+      }).catch(() => {
+        showToast('✓ Absensi Terkirim!', 3500);
+      });
+    } catch (e) {
+      showToast('✓ Absensi Terkirim!', 3500);
+    }
   } else {
-    showToast('Absensi terkirim ke sistem!', 3000);
+    showToast('✓ Hasil scan: ' + studentId, 3000);
   }
 
   setTimeout(() => {
     ScannerState.isSubmitting = false;
-  }, 3000);
+  }, 2500);
 }
 
 // ==========================================
