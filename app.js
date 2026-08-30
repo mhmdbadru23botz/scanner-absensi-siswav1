@@ -145,9 +145,11 @@ function startBarcodeReader() {
       // Scan failure callback per frame, keep silent
     }
   ).then(() => {
+    document.getElementById('camera-permission-fallback').style.display = 'none';
     checkTorchCapability();
   }).catch(err => {
-    showToast('Kamera Barcode Gagal: ' + err, 4000);
+    document.getElementById('camera-permission-fallback').style.display = 'flex';
+    showToast('Kamera Terblokir: ' + err, 4000);
   });
 }
 
@@ -183,14 +185,25 @@ function startFaceCamera() {
 
   navigator.mediaDevices.getUserMedia(constraints)
     .then(stream => {
+      document.getElementById('camera-permission-fallback').style.display = 'none';
       ScannerState.faceVideoStream = stream;
       video.srcObject = stream;
       const track = stream.getVideoTracks()[0];
       ScannerState.torchTrack = track;
     })
     .catch(err => {
+      document.getElementById('camera-permission-fallback').style.display = 'flex';
       showToast('Izin Kamera Wajah Ditolak: ' + err.message, 4000);
     });
+}
+
+function requestCameraAccessAgain() {
+  document.getElementById('camera-permission-fallback').style.display = 'none';
+  if (ScannerState.currentMode === 'BARCODE') {
+    startBarcodeReader();
+  } else if (ScannerState.currentMode === 'WAJAH') {
+    startFaceCamera();
+  }
 }
 
 function stopFaceCamera() {
