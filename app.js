@@ -128,22 +128,49 @@ function startBarcodeReader() {
     return;
   }
 
-  ScannerState.html5QrCode = new Html5Qrcode("qr-reader");
-  const config = {
-    fps: 15,
-    qrbox: { width: 260, height: 260 },
-    aspectRatio: 1.0
-  };
+  Html5Qrcode.getCameras().then(devices => {
+    if (devices && devices.length) {
+      let cameraId = devices[0].id;
+      const backCam = devices.find(d => 
+        d.label.toLowerCase().includes('back') || 
+        d.label.toLowerCase().includes('belakang') || 
+        d.label.toLowerCase().includes('rear') ||
+        d.label.toLowerCase().includes('environment')
+      );
+      if (backCam && ScannerState.facingMode === 'environment') {
+        cameraId = backCam.id;
+      }
 
+      ScannerState.html5QrCode = new Html5Qrcode("qr-reader");
+      const config = { fps: 15, qrbox: { width: 260, height: 260 }, aspectRatio: 1.0 };
+
+      ScannerState.html5QrCode.start(
+        cameraId,
+        config,
+        (decodedText) => onBarcodeDetected(decodedText),
+        () => {}
+      ).then(() => {
+        document.getElementById('camera-permission-fallback').style.display = 'none';
+        checkTorchCapability();
+      }).catch(() => {
+        startBarcodeWithFacingMode();
+      });
+    } else {
+      startBarcodeWithFacingMode();
+    }
+  }).catch(() => {
+    startBarcodeWithFacingMode();
+  });
+}
+
+function startBarcodeWithFacingMode() {
+  ScannerState.html5QrCode = new Html5Qrcode("qr-reader");
+  const config = { fps: 15, qrbox: { width: 260, height: 260 }, aspectRatio: 1.0 };
   ScannerState.html5QrCode.start(
     { facingMode: ScannerState.facingMode },
     config,
-    (decodedText, decodedResult) => {
-      onBarcodeDetected(decodedText);
-    },
-    (errorMessage) => {
-      // Scan failure callback per frame, keep silent
-    }
+    (decodedText) => onBarcodeDetected(decodedText),
+    () => {}
   ).then(() => {
     document.getElementById('camera-permission-fallback').style.display = 'none';
     checkTorchCapability();
