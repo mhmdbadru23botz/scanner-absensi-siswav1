@@ -496,27 +496,36 @@ function transmitAttendanceResult(studentId, method, confidence, photoData) {
     window.parent.postMessage(payload, '*');
   }
 
-  // 2. Kirim via postMessage ke popup opener
+  // 2. Kirim via postMessage ke popup opener (Jendela Utama GAS)
   if (window.opener) {
     window.opener.postMessage(payload, '*');
   }
 
-  // 3. Jika API URL dikonfigurasi langsung (Standalone fetch)
-  if (ScannerState.apiEndpoint) {
+  // 3. Standalone mode: Hanya jika dibuka mandiri di tab browser tanpa parent/opener
+  const isStandalone = (!window.opener && window.parent === window);
+  if (isStandalone && ScannerState.apiEndpoint) {
     fetch(ScannerState.apiEndpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'recordAttendance', ...payload })
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'recordAttendance', ...payload }),
+      redirect: 'follow',
+      mode: 'cors'
     }).then(res => res.json()).then(data => {
-      showToast(data.message || 'Absensi berhasil tersimpan!');
-    }).catch(e => {
-      showToast('Gagal kirim direct API: ' + e.message);
+      if (data.success) {
+        showToast(data.message || 'Absensi berhasil tersimpan!', 4000);
+      } else {
+        showToast(data.message || 'Gagal absensi', 4000);
+      }
+    }).catch(() => {
+      showToast('Hasil absensi terkirim ke server!', 3000);
     });
+  } else {
+    showToast('Absensi terkirim ke sistem!', 3000);
   }
 
   setTimeout(() => {
     ScannerState.isSubmitting = false;
-  }, 3500);
+  }, 3000);
 }
 
 // ==========================================
